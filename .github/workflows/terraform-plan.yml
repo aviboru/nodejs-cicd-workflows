@@ -1,0 +1,58 @@
+name: Terraform Plan
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+    secrets:
+      assume_role:
+        required: true
+
+jobs:
+  plan:
+    name: Terraform Plan for ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    if: |
+      (inputs.environment == 'dev' && startsWith(github.ref, 'refs/heads/feature/')) ||
+      (inputs.environment == 'qa' && github.ref == 'refs/heads/develop') ||
+      (inputs.environment == 'uat' && github.ref == 'refs/heads/release') ||
+      (inputs.environment == 'uat' && startsWith(github.ref, 'refs/heads/hotfix/')) ||
+      (inputs.environment == 'prod' && github.ref == 'refs/heads/main')
+
+    environment: ${{ inputs.environment }}
+
+    permissions:
+      # id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: us-west-2
+      TF_WORKSPACE: ${{ inputs.environment }}
+      TF_VAR_assume_role_arn: ${{ secrets.assume_role }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init
+        run: terraform init
+
+      # - name: Select or Create Workspace
+      #   run: terraform workspace select $TF_WORKSPACE || terraform workspace new $TF_WORKSPACE
+
+      # - name: Terraform Plan
+      #   run: terraform plan -out=tfplan -input=false
+
+      # - name: Upload Plan File
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: tfplan-${{ inputs.environment }}
+      #     path: tfplan

@@ -1,0 +1,54 @@
+name: Package Artifact
+
+on:
+  workflow_call:
+    inputs:
+      REPO:
+        required: true
+        type: string
+      COMMIT_SHA:
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+
+jobs:
+  package_artifact:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact: ${{ steps.package_artifact.outputs.artifact }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker
+        run: |
+          # Extract the repo name (without the owner)
+          REPO_NAME=$(echo "${{ inputs.REPO }}" | cut -d'/' -f2)
+          echo "Building Docker image for repository: $REPO_NAME"
+          docker build -t $REPO_NAME:${{ inputs.COMMIT_SHA }} .
+
+      - name: Docker Login
+        run: |
+          echo "Logging in to Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin docker.io
+
+      - name: Create Docker Repository if not exists
+        run: |
+          # Extract the repo name (without the owner)
+          REPO_NAME=$(echo "${{ inputs.REPO }}" | cut -d'/' -f2)
+          echo "Attempting to create repository $REPO_NAME"
+      
+      - name: Docker Push
+        id: package_artifact
+        run: |
+          # Extract the repo name (without the owner)
+          REPO_NAME=$(echo "${{ inputs.REPO }}" | cut -d'/' -f2)
+          IMAGE_TAG="aviboru88/$REPO_NAME:${{ inputs.COMMIT_SHA }}"
+          echo "Tagging and pushing Docker image as $IMAGE_TAG..."
+          docker tag $REPO_NAME:${{ inputs.COMMIT_SHA }} $IMAGE_TAG
+          docker push $IMAGE_TAG
+          echo "artifact=$IMAGE_TAG" >> $GITHUB_OUTPUT

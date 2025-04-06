@@ -1,0 +1,13 @@
+name: Build Code Security
+
+on:
+  workflow_call:
+
+jobs:
+  code_security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Software Composition Analysis (SCA)
+        run: echo "Snyk SCA"
+      - name: Static Application Security Testing (SAST)
+        run: echo "Snyk SAST"
