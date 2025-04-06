@@ -1,0 +1,11 @@
+name: Build Code Quality
+
+on:
+  workflow_call:
+
+jobs:
+  code_quality:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "SonarQube Scan"
+      - run: echo "SonarQube Quality Gate"

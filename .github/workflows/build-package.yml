@@ -1,0 +1,31 @@
+name: Package Artifact
+
+on:
+  workflow_call:
+    inputs:
+      REPO:
+        required: true
+        type: string
+      COMMIT_SHA:
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+
+jobs:
+  package_artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          REPO_NAME=$(echo "${{ inputs.REPO }}" | cut -d'/' -f2)
+          docker build -t $REPO_NAME:${{ inputs.COMMIT_SHA }} .
+      - run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - run: |
+          REPO_NAME=$(echo "${{ inputs.REPO }}" | cut -d'/' -f2)
+          IMAGE_TAG="aviboru88/$REPO_NAME:${{ inputs.COMMIT_SHA }}"
+          docker tag $REPO_NAME:${{ inputs.COMMIT_SHA }} $IMAGE_TAG
+          docker push $IMAGE_TAG

@@ -1,0 +1,11 @@
+name: Build Code Security
+
+on:
+  workflow_call:
+
+jobs:
+  code_security:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Snyk SCA"
+      - run: echo "Snyk SAST"

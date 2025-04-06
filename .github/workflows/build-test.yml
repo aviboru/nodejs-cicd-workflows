@@ -1,0 +1,11 @@
+name: Build Test
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "eslint"
+      - run: echo "jest"

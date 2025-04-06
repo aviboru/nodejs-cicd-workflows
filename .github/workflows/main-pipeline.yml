@@ -1,0 +1,47 @@
+name: Node App CI/CD
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'hotfix/**'
+      - develop
+      - release
+      - main
+
+jobs:
+  compile:
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/build-compile.yml@main
+
+  test:
+    needs: compile
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/build-test.yml@main
+
+  quality:
+    needs: test
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/build-quality.yml@main
+
+  security:
+    needs: quality
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/build-security.yml@main
+
+  package:
+    needs: security
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/build-package.yml@main
+    with:
+      REPO: ${{ github.repository }}
+      COMMIT_SHA: ${{ github.sha }}
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  deploy-dev:
+    needs: package
+    uses: your-org/nodejs-cicd-workflows/.github/workflows/terraform-apply.yml@main
+    with:
+      environment: dev
+    secrets:
+      assume_role: ${{ secrets.ASSUME_ROLE_DEV }}
+    permissions:
+      contents: write
+      id-token: write
